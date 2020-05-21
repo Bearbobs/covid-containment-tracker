@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>TEAL Covid Containment Zones Delhi</title>
+	<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-138573560-2"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
+		gtag('config', 'UA-138573560-2');
+	</script>
+	<link rel="shortcut icon" href="http://www.iconj.com/ico/u/a/uakm0qskgz.ico" type="image/x-icon" />
+	<script src="https://api.mapbox.com/mapbox-gl-js/v1.10.0/mapbox-gl.js"></script>
+	<link href="https://api.mapbox.com/mapbox-gl-js/v1.10.0/mapbox-gl.css" rel="stylesheet" />
+	<link href="https://fonts.googleapis.com/css?family=Jost:400,500&display=swap" rel="stylesheet" />
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+		}
+
+		#map {
+			position: absolute;
+			top: 50px;
+			bottom: 0;
+			width: 100%;
+		}
+
+		.header {
+			position: fixed;
+			height: 50px;
+			width: 100%;
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+			background-color: white;
+			box-shadow: 0 0 6px #d5d5d5;
+			z-index: 100;
+			align-items: center;
+			padding: 0 20px;
+			box-sizing: border-box;
+		}
+
+		.logo {
+			height: 35px;
+		}
+
+		.title {
+			text-align: center;
+			font-size: 16px;
+			font-weight: 500;
+			letter-spacing: 0.03em;
+			color: teal;
+		}
+
+		.caption {
+			text-align: right;
+			font-size: 11px;
+			color: #757575;
+		}
+
+		.menu {
+			position: absolute;
+			background: #fff;
+			padding: 10px;
+		}
+
+		.mapboxgl-popup {
+			max-width: 400px;
+			font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+		}
+	</style>
+</head>
+
+<body>
+	<script
+		src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.min.js"></script>
+	<link rel="stylesheet"
+		href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.css"
+		type="text/css" />
+	<!-- Promise polyfill script required to use Mapbox GL Geocoder in IE 11 -->
+	<script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.min.js"></script>
+
+	<div class="header">
+		<div>
+			<a href="https://www.tealindia.in/">
+				<img class="logo"
+					src="https://static1.squarespace.com/static/5bc1c9147eb88c75a6872f3a/t/5c50846a6d2a73e16f30f76f/1589134241992/?format=1500w" />
+			</a>
+		</div>
+		<div class="title">
+			Covid-19 Containment Zones in Delhi
+		</div>
+		<div id="menu">
+			<input id="cka0w5h3x0mhi1im0t551cibx" type="radio" name="rtoggle" value="streets" checked="checked" />
+			<label for="streets" class="title">Streets</label>
+			<input id="cka25fhkh0hxq1ilbagplpi9f" type="radio" name="rtoggle" value="satellite" />
+			<label for="satellite" class="title">Satellite</label>
+		</div>
+	</div>
+
+	<div id="map"></div>
+
+	<script>
+		mapboxgl.accessToken =
+			'pk.eyJ1IjoiYW51ajAwNzAiLCJhIjoiY2thMHcyZDN4MHI0bzNlbHRoZm5jMnprYyJ9.516zWIdaUE1ObTKYTFO1aQ';
+		var map = new mapboxgl.Map({
+			container: 'map',
+			style: 'mapbox://styles/anuj0070/cka0w5h3x0mhi1im0t551cibx',
+			center: [77.222, 28.7046],
+			zoom: 10,
+		});
+
+		map.addControl(
+			new MapboxGeocoder({
+				accessToken: mapboxgl.accessToken,
+				countries: 'in',
+				bbox: [76.804047, 28.395025, 77.395935, 28.907206],
+				mapboxgl: mapboxgl,
+			})
+		);
+
+		var layerList = document.getElementById('menu');
+		var inputs = layerList.getElementsByTagName('input');
+
+		function switchLayer(layer) {
+			var layerId = layer.target.id;
+			map.setStyle('mapbox://styles/anuj0070/' + layerId);
+		}
+
+		for (var i = 0; i < inputs.length; i++) {
+			inputs[i].onclick = switchLayer;
+		}
+
+		map.on('load', function () {
+			var popup = new mapboxgl.Popup({
+				closeButton: false,
+				closeOnClick: false,
+			});
+
+			map.on('mouseenter', 'covid-spots', function (e) {
+				// Change the cursor style as a UI indicator.
+				map.getCanvas().style.cursor = 'pointer';
+
+				var coordinates = e.features[0].geometry.coordinates.slice();
+				var description = e.features[0].properties.Address;
+
+				// Ensure that if the map is zoomed out such that multiple
+				// copies of the feature are visible, the popup appears
+				// over the copy being pointed to.
+				while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+					coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+				}
+
+				// Populate the popup and set its coordinates
+				// based on the feature found.
+				popup.setLngLat(coordinates).setHTML(description).addTo(map);
+			});
+
+			map.on('mouseleave', 'covid-spots', function () {
+				map.getCanvas().style.cursor = '';
+				popup.remove();
+			});
+		});
+	</script>
+</body>
+
+</html>
